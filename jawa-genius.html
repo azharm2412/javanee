@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jawa Genius - Kosakata</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs" defer></script>
+    <style>
+      body {
+        font-family: "Nunito", sans-serif;
+        background-color: #fefce8;
+      }
+    </style>
+  </head>
+  <body>
+    <div x-data="jawaGeniusApp" class="max-w-4xl mx-auto p-6">
+      <h1 class="text-3xl font-bold mb-6 text-yellow-800">
+        📚 Jawa Genius - Latihan Kosakata
+      </h1>
+
+      <!-- Level Navigation -->
+      <div class="flex gap-4 mb-6 overflow-x-auto">
+        <template x-for="(level, idx) in levels" :key="idx">
+          <button
+            @click="pilihLevel(idx)"
+            class="px-4 py-2 rounded-full border text-sm font-semibold"
+            :class="selectedLevel === idx ? 'bg-yellow-400 text-white' : 'bg-white text-yellow-800 border-yellow-300'"
+          >
+            <span x-text="level.nama"></span>
+          </button>
+        </template>
+      </div>
+
+      <!-- Sub Materi -->
+      <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <template x-for="(materi, idx) in levelAktif.units" :key="idx">
+          <button
+            @click="pilihMateri(idx)"
+            class="p-4 bg-white rounded-xl shadow hover:shadow-md border border-yellow-200 text-left"
+          >
+            <h3 class="text-lg font-bold mb-1" x-text="materi.judul"></h3>
+            <p class="text-sm text-gray-600" x-text="materi.deskripsi"></p>
+          </button>
+        </template>
+      </div>
+
+      <!-- Soal Interaktif -->
+      <template x-if="unitAktif">
+        <div class="bg-yellow-50 rounded-xl p-6">
+          <h2
+            class="text-xl font-semibold mb-4"
+            x-text="unitAktif.judul + ' - Soal ' + (soalAktifIndex + 1) + '/' + unitAktif.soal.length"
+          ></h2>
+          <p
+            class="mb-3 font-medium"
+            x-text="unitAktif.soal[soalAktifIndex].pertanyaan"
+          ></p>
+          <div class="space-y-2">
+            <template
+              x-for="(opsi, i) in unitAktif.soal[soalAktifIndex].opsi"
+              :key="i"
+            >
+              <button
+                @click="jawab(opsi)"
+                class="block w-full text-left px-4 py-2 rounded-lg border hover:bg-yellow-100"
+                :class="getStyle(opsi)"
+              >
+                <span x-text="opsi"></span>
+              </button>
+            </template>
+          </div>
+          <template x-if="feedback">
+            <div
+              class="mt-4 text-sm"
+              :class="feedback.benar ? 'text-green-700' : 'text-red-600'"
+            >
+              <strong x-text="feedback.benar ? '✅ Benar!' : '❌ Salah'">
+              </strong>
+              <span x-text="feedback.pembahasan"></span>
+            </div>
+          </template>
+          <div class="mt-4" x-show="feedback">
+            <button
+              @click="lanjutSoal()"
+              class="px-4 py-2 bg-yellow-400 text-white rounded hover:bg-yellow-500"
+            >
+              Soal Selanjutnya
+            </button>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Alpine Component Logic -->
+    <script>
+      document.addEventListener("alpine:init", () => {
+        Alpine.data("jawaGeniusApp", () => ({
+          selectedLevel: 0,
+          selectedUnit: null,
+          soalAktifIndex: 0,
+          feedback: null,
+          levels: [
+            {
+              nama: "Pemula",
+              units: [
+                {
+                  judul: "Salam Sehari-hari",
+                  deskripsi:
+                    "Belajar ucapan salam dalam berbagai unggah-ungguh.",
+                  soal: [
+                    {
+                      pertanyaan: 'Apa padanan krama dari "halo"?',
+                      opsi: ["Sugeng rawuh", "Sugeng sonten", "Kulo nuwun"],
+                      jawaban: "Kulo nuwun",
+                      pembahasan:
+                        '"Kulo nuwun" biasa digunakan sebagai salam sopan sebelum masuk atau menyapa.',
+                    },
+                    {
+                      pertanyaan: "Salam untuk pagi hari dalam bahasa krama?",
+                      opsi: ["Sugeng enjang", "Pagi", "Wilujeng wengi"],
+                      jawaban: "Sugeng enjang",
+                      pembahasan:
+                        '"Sugeng enjang" adalah salam pagi hari dalam bentuk krama alus.',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          get levelAktif() {
+            return this.levels[this.selectedLevel];
+          },
+          get unitAktif() {
+            return this.selectedUnit !== null
+              ? this.levelAktif.units[this.selectedUnit]
+              : null;
+          },
+          pilihLevel(index) {
+            this.selectedLevel = index;
+            this.selectedUnit = null;
+            this.feedback = null;
+          },
+          pilihMateri(index) {
+            this.selectedUnit = index;
+            this.soalAktifIndex = 0;
+            this.feedback = null;
+          },
+          jawab(pilihan) {
+            const soal = this.unitAktif.soal[this.soalAktifIndex];
+            const benar = pilihan === soal.jawaban;
+            this.feedback = {
+              benar,
+              pembahasan: soal.pembahasan,
+            };
+          },
+          lanjutSoal() {
+            if (this.soalAktifIndex + 1 < this.unitAktif.soal.length) {
+              this.soalAktifIndex++;
+              this.feedback = null;
+            } else {
+              alert("🎉 Kamu telah menyelesaikan semua soal di unit ini!");
+              this.selectedUnit = null;
+              this.feedback = null;
+            }
+          },
+          getStyle(opsi) {
+            if (!this.feedback) return "";
+            const benar =
+              opsi === this.unitAktif.soal[this.soalAktifIndex].jawaban;
+            return benar
+              ? "bg-green-100 border-green-400 text-green-700"
+              : "bg-red-100 border-red-400 text-red-700";
+          },
+        }));
+      });
+    </script>
+  </body>
+</html>
