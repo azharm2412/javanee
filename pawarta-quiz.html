@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pawarta Quiz</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/alpinejs" defer></script>
+  <style>
+    body {
+      font-family: "Nunito", sans-serif;
+      background-color: #f5f5dc;
+    }
+  </style>
+</head>
+<body>
+  <!-- SUARA -->
+   <audio id="benarSound" src="Audio/true.mp3"></audio>
+   <audio id="salahSound" src="Audio/false.mp3"></audio>
+   
+  <div class="max-w-6xl mx-auto p-6">
+    <h1 class="text-4xl font-bold text-center mb-10 text-yellow-800">Pawarta Quiz</h1>
+
+    <div x-data="quizApp()" class="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow space-y-6">
+      <!-- Skor -->
+      <div class="flex justify-between items-center">
+        <p class="text-lg font-semibold">Skor: <span x-text="score"></span></p>
+      </div>
+
+      <!-- Soal -->
+      <div class="flex flex-col gap-6">
+        <!-- Teks Soal -->
+        <div class="text-xl font-semibold bg-yellow-100 p-4 rounded-xl text-center">
+          <p x-text="questions[current].question"></p>
+        </div>
+
+        <!-- Opsi Jawaban -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <template x-for="(choice, index) in questions[current].choices" :key="index">
+            <button
+              class="px-4 py-2 text-white text-md font-semibold rounded-lg transition"
+              :class="[
+                selected !== null && index === questions[current].correct ? 'bg-green-500' :
+                selected !== null && index === selected ? 'bg-red-500' :
+                'bg-yellow-600 hover:bg-yellow-700'
+              ]"
+              :disabled="selected !== null"
+              @click="selectAnswer(index)"
+              x-text="choice"
+            ></button>
+          </template>
+        </div>
+      </div>
+
+      <!-- Navigasi -->
+      <div class="flex justify-between items-center mt-6">
+        <button @click="prev()" class="text-gray-500 hover:text-gray-700" :disabled="current === 0">⬅ Prev</button>
+        <p><span x-text="current + 1"></span> of <span x-text="questions.length"></span></p>
+        <button @click="next()" class="text-gray-500 hover:text-gray-700" :disabled="current === questions.length - 1">Next ➡</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+    function quizApp() {
+      return {
+        current: 0,
+        score: 0,
+        selected: null,
+        questions: [
+          {
+            question: 'Tembung "turu" tegese...',
+            choices: ["Makan", "Tidur", "Pergi", "Menangis"],
+            correct: 1
+          },
+          {
+            question: 'Tembung "abrit" tegese...',
+            choices: ["Hijau", "Hitam", "Merah", "Kuning"],
+            correct: 2
+          },
+          {
+            question: 'Tembung "mlaku" tegese...',
+            choices: ['Tidur', 'Jalan', 'Lari', 'Main'],
+            correct: 1
+          },
+          {
+            question: 'Basa krama saka “mangan” yaiku...',
+            choices: ['Turu', 'Ngombe', 'Nedha', 'Mlaku'],
+            correct: 2
+          },
+          {
+            question: 'Tembung “ireng” ing basa Indonesia tegese...',
+            choices: ['Merah', 'Putih', 'Hitam', 'Biru'],
+            correct: 2
+          },
+          {
+            question: 'Jeneng dina sadurungé Rebo yaiku...',
+            choices: ['Senin', 'Selasa', 'Kemis', 'Jemuah'],
+            correct: 1
+          },
+          {
+            question: 'Jenengé ibukutha provinsi Jawa Tengah yaiku...',
+            choices: ['Semarang', 'Solo', 'Yogyakarta', 'Magelang'],
+            correct: 0
+          }
+        ],
+        selectAnswer(index) {
+          if (this.selected !== null) return; // cegah pilih ulang
+          this.selected = index;
+          const benarSound = document.getElementById("benarSound");
+          const salahSound = document.getElementById("salahSound");
+          if (index === this.questions[this.current].correct) {
+            this.score += 1;
+            benarSound.play();
+          } else {
+            salahSound.play();
+          }
+        },
+        next() {
+          if (this.current < this.questions.length - 1) {
+            this.current++;
+            this.selected = null;
+          }
+        },
+        prev() {
+          if (this.current > 0) {
+            this.current--;
+            this.selected = null;
+          }
+        }
+      }
+    }
+  </script>
+
+    <!-- Tombol Kembali ke Beranda -->
+      <div class="mt-8 text-center col-span-2">
+      <a href="index.html"
+         class="inline-block px-6 py-2 rounded-full bg-yellow-500 text-white font-semibold shadow hover:bg-yellow-600 transition">
+        Kembali ke Beranda
+      </a>
+    </div>
+</body>
+</html>

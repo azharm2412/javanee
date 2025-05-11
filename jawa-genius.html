@@ -1,179 +1,190 @@
 <!DOCTYPE html>
-<html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jawa Genius - Kosakata</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/alpinejs" defer></script>
-    <style>
-      body {
-        font-family: "Nunito", sans-serif;
-        background-color: #fefce8;
-      }
-    </style>
-  </head>
-  <body>
-    <div x-data="jawaGeniusApp" class="max-w-4xl mx-auto p-6">
-      <h1 class="text-3xl font-bold mb-6 text-yellow-800">
-        📚 Jawa Genius - Latihan Kosakata
-      </h1>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Jawa Jenius: Flashcard Interaktif</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/alpinejs" defer></script>
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background-color: #fdf6e3;
+    }
 
-      <!-- Level Navigation -->
-      <div class="flex gap-4 mb-6 overflow-x-auto">
-        <template x-for="(level, idx) in levels" :key="idx">
-          <button
-            @click="pilihLevel(idx)"
-            class="px-4 py-2 rounded-full border text-sm font-semibold"
-            :class="selectedLevel === idx ? 'bg-yellow-400 text-white' : 'bg-white text-yellow-800 border-yellow-300'"
-          >
-            <span x-text="level.nama"></span>
-          </button>
-        </template>
+    .card-container {
+      perspective: 1000px;
+    }
+
+    .card-inner {
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .card-inner.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 1rem;
+      font-weight: bold;
+    }
+
+    .card-front {
+      background-color: white;
+    }
+
+    .card-back {
+      background-color: #facc15; /* yellow-400 */
+      color: #78350f; /* yellow-800 */
+      transform: rotateY(180deg);
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center">
+  <div class="max-w-6xl mx-auto p-6">
+    <h1 class="text-4xl font-bold text-center mb-10 text-yellow-800">
+      Jawa Jenius: Belajar Kosakata
+    </h1>
+
+    <div x-data="flashcards()" class="w-full max-w-xl p-6 text-center">
+      <!-- Nomor Kartu -->
+      <div class="mb-4 text-lg font-semibold text-gray-600">
+        <span x-text="current + 1"></span> of <span x-text="cards.length"></span>
       </div>
 
-      <!-- Sub Materi -->
-      <div class="grid md:grid-cols-2 gap-4 mb-6">
-        <template x-for="(materi, idx) in levelAktif.units" :key="idx">
-          <button
-            @click="pilihMateri(idx)"
-            class="p-4 bg-white rounded-xl shadow hover:shadow-md border border-yellow-200 text-left"
-          >
-            <h3 class="text-lg font-bold mb-1" x-text="materi.judul"></h3>
-            <p class="text-sm text-gray-600" x-text="materi.deskripsi"></p>
-          </button>
-        </template>
-      </div>
+      <!-- Kartu -->
+      <div class="card-container w-full h-80 cursor-pointer" @click="flipCard()">
+        <div :class="{'card-inner': true, 'flipped': flipped}">
+          <!-- Sisi Depan -->
+          <div class="card-face card-front shadow-xl border-4 border-yellow-600 text-xl" x-text="cards[current].soal"></div>
 
-      <!-- Soal Interaktif -->
-      <template x-if="unitAktif">
-        <div class="bg-yellow-50 rounded-xl p-6">
-          <h2
-            class="text-xl font-semibold mb-4"
-            x-text="unitAktif.judul + ' - Soal ' + (soalAktifIndex + 1) + '/' + unitAktif.soal.length"
-          ></h2>
-          <p
-            class="mb-3 font-medium"
-            x-text="unitAktif.soal[soalAktifIndex].pertanyaan"
-          ></p>
-          <div class="space-y-2">
-            <template
-              x-for="(opsi, i) in unitAktif.soal[soalAktifIndex].opsi"
-              :key="i"
-            >
-              <button
-                @click="jawab(opsi)"
-                class="block w-full text-left px-4 py-2 rounded-lg border hover:bg-yellow-100"
-                :class="getStyle(opsi)"
-              >
-                <span x-text="opsi"></span>
-              </button>
-            </template>
-          </div>
-          <template x-if="feedback">
-            <div
-              class="mt-4 text-sm"
-              :class="feedback.benar ? 'text-green-700' : 'text-red-600'"
-            >
-              <strong x-text="feedback.benar ? '✅ Benar!' : '❌ Salah'">
-              </strong>
-              <span x-text="feedback.pembahasan"></span>
-            </div>
-          </template>
-          <div class="mt-4" x-show="feedback">
-            <button
-              @click="lanjutSoal()"
-              class="px-4 py-2 bg-yellow-400 text-white rounded hover:bg-yellow-500"
-            >
-              Soal Selanjutnya
-            </button>
-          </div>
+          <!-- Sisi Belakang -->
+          <div class="card-face card-back text-2xl" x-text="cards[current].answer"></div>
         </div>
-      </template>
-    </div>
+      </div>
 
-    <!-- Alpine Component Logic -->
-    <script>
-      document.addEventListener("alpine:init", () => {
-        Alpine.data("jawaGeniusApp", () => ({
-          selectedLevel: 0,
-          selectedUnit: null,
-          soalAktifIndex: 0,
-          feedback: null,
-          levels: [
-            {
-              nama: "Pemula",
-              units: [
-                {
-                  judul: "Salam Sehari-hari",
-                  deskripsi:
-                    "Belajar ucapan salam dalam berbagai unggah-ungguh.",
-                  soal: [
-                    {
-                      pertanyaan: 'Apa padanan krama dari "halo"?',
-                      opsi: ["Sugeng rawuh", "Sugeng sonten", "Kulo nuwun"],
-                      jawaban: "Kulo nuwun",
-                      pembahasan:
-                        '"Kulo nuwun" biasa digunakan sebagai salam sopan sebelum masuk atau menyapa.',
-                    },
-                    {
-                      pertanyaan: "Salam untuk pagi hari dalam bahasa krama?",
-                      opsi: ["Sugeng enjang", "Pagi", "Wilujeng wengi"],
-                      jawaban: "Sugeng enjang",
-                      pembahasan:
-                        '"Sugeng enjang" adalah salam pagi hari dalam bentuk krama alus.',
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-          get levelAktif() {
-            return this.levels[this.selectedLevel];
+      <!-- Tombol Navigasi -->
+      <div class="mt-6 flex justify-center gap-4">
+        <button
+          @click="prev()"
+          class="bg-gray-400 text-white px-5 py-2 rounded shadow hover:bg-gray-500 transition"
+          :disabled="current === 0">
+          ⬅ Prev
+        </button>
+        <button
+          @click="next()"
+          class="bg-blue-500 text-white px-5 py-2 rounded shadow hover:bg-blue-600 transition">
+          Next ➡
+        </button>
+      </div>
+
+      <!-- Audio -->
+      <template x-for="(card, index) in cards" :key="index">
+        <audio :id="'audio-' + index" :src="card.audio"></audio>
+      </template>
+
+      <div class="mt-8 text-center col-span-2">
+        <a href="index.html"
+           class="inline-block px-6 py-2 rounded-full bg-yellow-500 text-white font-semibold shadow hover:bg-yellow-600 transition">
+          Kembali ke Beranda
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    function flashcards() {
+      return {
+        current: 0,
+        flipped: false,
+        cards: [
+          {
+            soal: "Sugeng Enjing",
+            answer: "Selamat pagi",
+            audio: "Audio/true.mp3"
           },
-          get unitAktif() {
-            return this.selectedUnit !== null
-              ? this.levelAktif.units[this.selectedUnit]
-              : null;
+          {
+            soal: "Matur Nuwun",
+            answer: "Terima kasih",
+            audio: "Audio/true.mp3"
           },
-          pilihLevel(index) {
-            this.selectedLevel = index;
-            this.selectedUnit = null;
-            this.feedback = null;
+          {
+            soal: "Sampun",
+            answer: "Sudah",
+            audio: "Audio/true.mp3"
           },
-          pilihMateri(index) {
-            this.selectedUnit = index;
-            this.soalAktifIndex = 0;
-            this.feedback = null;
+          {
+            soal: "Kulo",
+            answer: "Saya",
+            audio:"Audio/true.mp3"
           },
-          jawab(pilihan) {
-            const soal = this.unitAktif.soal[this.soalAktifIndex];
-            const benar = pilihan === soal.jawaban;
-            this.feedback = {
-              benar,
-              pembahasan: soal.pembahasan,
-            };
+          {
+            soal:"Panjenengan",
+            answer: "Anda",
+            audio: "Audio/true.mp3"
           },
-          lanjutSoal() {
-            if (this.soalAktifIndex + 1 < this.unitAktif.soal.length) {
-              this.soalAktifIndex++;
-              this.feedback = null;
-            } else {
-              alert("🎉 Kamu telah menyelesaikan semua soal di unit ini!");
-              this.selectedUnit = null;
-              this.feedback = null;
-            }
+          {
+            soal: "Pundi",
+            answer: "Di mana",
+            audio: "Audio/true.mp3"
           },
-          getStyle(opsi) {
-            if (!this.feedback) return "";
-            const benar =
-              opsi === this.unitAktif.soal[this.soalAktifIndex].jawaban;
-            return benar
-              ? "bg-green-100 border-green-400 text-green-700"
-              : "bg-red-100 border-red-400 text-red-700";
+          {
+            soal: "Nopo",
+            Answer: "Apa",
+            audio: Audio/true.mp3
           },
-        }));
-      });
-    </script>
-  </body>
+          {
+            soal: "Kados pundi?",
+            answer: "Bagaimana?",
+            audio: "Audio/true.mp3"
+          }
+        ],
+        flipCard() {
+          this.flipped = !this.flipped;
+          if (this.flipped) {
+            this.playAudio();
+          }
+        },
+        playAudio() {
+          document.querySelectorAll("audio").forEach(a => {
+            a.pause();
+            a.currentTime = 0;
+          });
+          const audio = document.getElementById("audio-" + this.current);
+          if (audio) audio.play();
+        },
+        next() {
+          if (this.current < this.cards.length - 1) {
+            this.current++;
+          } else {
+            this.current = 0;
+          }
+          this.flipped = false;
+        },
+        prev() {
+          if (this.current > 0) {
+            this.current--;
+          } else {
+            this.current = this.cards.length - 1;
+          }
+          this.flipped = false;
+        }
+      };
+    }
+  </script>
+
+  
+</body>
 </html>
